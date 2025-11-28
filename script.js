@@ -111,6 +111,17 @@ function deleteReflection(id, cardElement) {
     });
 }
 
+function updateReflection(id, updatedData) {
+    const reflections = getReflections();
+    const index = reflections.findIndex(r => r.id === id);
+    if (index !== -1) {
+        reflections[index] = { ...reflections[index], ...updatedData };
+        localStorage.setItem('3point_reflections', JSON.stringify(reflections));
+        renderHistory();
+        renderHeatmap();
+    }
+}
+
 // --- Form Handling ---
 
 form.addEventListener('submit', (e) => {
@@ -266,9 +277,20 @@ function renderHistory() {
                         <p class="text-base font-light leading-relaxed ${nextColor} pl-5">${item.next}</p>
                     </div>
 
-                     <div class="flex justify-end pt-4 border-t border-white/5 opacity-50 hover:opacity-100 transition-opacity">
+                     <div class="action-buttons flex justify-end gap-4 pt-4 border-t border-white/5 opacity-50 hover:opacity-100 transition-opacity">
+                        <button class="edit-btn text-xs mono text-blue-400 flex items-center gap-1 hover:underline">
+                            <i data-lucide="edit-2" class="w-3 h-3"></i> 編集
+                        </button>
                         <button class="delete-btn text-xs mono text-red-400 flex items-center gap-1 hover:underline">
                             <i data-lucide="trash-2" class="w-3 h-3"></i> 削除する
+                        </button>
+                    </div>
+                    <div class="edit-actions hidden flex justify-end gap-4 pt-4 border-t border-white/5">
+                        <button class="cancel-btn text-xs mono text-white/60 flex items-center gap-1 hover:underline">
+                            <i data-lucide="x" class="w-3 h-3"></i> キャンセル
+                        </button>
+                        <button class="save-btn text-xs mono text-green-400 flex items-center gap-1 hover:underline">
+                            <i data-lucide="check" class="w-3 h-3"></i> 保存
                         </button>
                     </div>
                 </div>
@@ -282,10 +304,23 @@ function renderHistory() {
         const body = card.querySelector('.card-body');
         const chevron = card.querySelector('.chevron-icon');
         const deleteBtn = card.querySelector('.delete-btn');
+        const editBtn = card.querySelector('.edit-btn');
+        const saveBtn = card.querySelector('.save-btn');
+        const cancelBtn = card.querySelector('.cancel-btn');
+        const actionButtons = card.querySelector('.action-buttons');
+        const editActions = card.querySelector('.edit-actions');
+
+        const eventText = card.querySelector('.card-body .space-y-1:nth-child(1) p');
+        const winText = card.querySelector('.card-body .space-y-1:nth-child(2) p');
+        const nextText = card.querySelector('.card-body .space-y-1:nth-child(3) p');
 
         let isExpanded = false;
+        let isEditing = false;
+        let originalContent = {};
 
         header.addEventListener('click', () => {
+            if (isEditing) return; // Prevent collapse during edit
+
             if (!isExpanded) {
                 // Expand
                 gsap.set(body, { height: 'auto' });
@@ -302,10 +337,120 @@ function renderHistory() {
         });
 
         deleteBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent card toggle when clicking delete
+            e.stopPropagation();
             if (confirm('本当に削除しますか？')) {
                 deleteReflection(item.id, card);
             }
+        });
+
+        editBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            isEditing = true;
+
+            // Store original content
+            originalContent = {
+                event: eventText.textContent,
+                win: winText.textContent,
+                next: nextText.textContent
+            };
+
+            // Make text editable
+            eventText.contentEditable = true;
+            winText.contentEditable = true;
+            nextText.contentEditable = true;
+
+            // Add editing styles
+            [eventText, winText, nextText].forEach(el => {
+                el.style.outline = '1px solid rgba(255, 255, 255, 0.2)';
+                el.style.padding = '8px';
+                el.style.borderRadius = '4px';
+                el.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+            });
+
+            // Toggle buttons
+            actionButtons.style.display = 'none';
+            editActions.classList.remove('hidden');
+            editActions.classList.add('flex');
+
+            // Recreate icons after DOM changes
+            lucide.createIcons();
+
+            // Recalculate and update card height to show the new buttons
+            gsap.set(body, { height: 'auto' });
+            const newHeight = body.scrollHeight;
+            gsap.from(body, { height: body.offsetHeight, duration: 0.3, ease: "power3.out" });
+            gsap.to(body, { height: newHeight, duration: 0.3, ease: "power3.out" });
+        });
+
+        cancelBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+
+            // Restore original content
+            eventText.textContent = originalContent.event;
+            winText.textContent = originalContent.win;
+            nextText.textContent = originalContent.next;
+
+            // Remove editable state
+            eventText.contentEditable = false;
+            winText.contentEditable = false;
+            nextText.contentEditable = false;
+
+            // Remove editing styles
+            [eventText, winText, nextText].forEach(el => {
+                el.style.outline = '';
+                el.style.padding = '';
+                el.style.borderRadius = '';
+                el.style.backgroundColor = '';
+            });
+
+            // Toggle buttons
+            actionButtons.style.display = 'flex';
+            editActions.classList.add('hidden');
+            editActions.classList.remove('flex');
+
+            isEditing = false;
+
+            // Recalculate card height after hiding edit buttons
+            gsap.set(body, { height: 'auto' });
+            const newHeight = body.scrollHeight;
+            gsap.to(body, { height: newHeight, duration: 0.3, ease: "power3.out" });
+        });
+
+        saveBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+
+            // Get updated content
+            const updatedEvent = eventText.textContent.trim();
+            const updatedWin = winText.textContent.trim();
+            const updatedNext = nextText.textContent.trim();
+
+            // Validate
+            if (!updatedEvent || !updatedWin || !updatedNext) {
+                alert('すべてのフィールドを入力してください。');
+                return;
+            }
+
+            // Update data
+            updateReflection(item.id, {
+                event: updatedEvent,
+                win: updatedWin,
+                next: updatedNext,
+                winLength: updatedWin.length
+            });
+
+            // Success animation
+            gsap.fromTo(card,
+                { scale: 1 },
+                {
+                    scale: 0.98,
+                    duration: 0.15,
+                    yoyo: true,
+                    repeat: 1,
+                    ease: "power2.inOut"
+                }
+            );
+
+            isEditing = false;
         });
 
     });
