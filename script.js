@@ -460,3 +460,81 @@ function renderHistory() {
     });
 
 }
+
+// --- Particle Effects (Star Dust) ---
+(function () {
+    const input = document.getElementById('input-win');
+    const emitter = document.getElementById('star-emitter');
+
+    if (!input || !emitter) return;
+
+    // Lucide replaces <i> with <svg>, so we need to find the svg inside the emitter span
+    let icon = emitter.querySelector('svg');
+
+    function createParticle() {
+        if (!icon) {
+            icon = emitter.querySelector('svg');
+            if (!icon) return;
+        }
+
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+
+        // Randomize appearance
+        const size = Math.random() * 3 + 1; // Reduced: 1px - 4px
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.background = '#fbbf24'; // Tailwind amber-400
+
+        // Get Emitter Position
+        const rect = icon.getBoundingClientRect();
+
+        // Random start position near the icon center
+        const startX = rect.left + rect.width / 2 + (Math.random() * 20 - 10);
+        const startY = rect.top + rect.height / 2 + (Math.random() * 20 - 10);
+
+        particle.style.left = `${startX}px`;
+        particle.style.top = `${startY}px`;
+        particle.style.opacity = Math.random() * 0.5 + 0.5;
+
+        document.body.appendChild(particle);
+
+        // Animate using GSAP
+        const duration = Math.random() * 2 + 1; // 1s - 3s
+        const driftX = Math.random() * 120 - 60; // -60px to 60px
+        const riseY = Math.random() * 120 + 80;  // 80px to 200px
+
+        gsap.to(particle, {
+            x: driftX,
+            y: -riseY,
+            opacity: 0,
+            scale: 0,
+            duration: duration,
+            ease: "power2.out",
+            onComplete: () => {
+                particle.remove();
+            }
+        });
+    }
+
+    input.addEventListener('input', (e) => {
+        if (!icon) {
+            icon = emitter.querySelector('svg');
+        }
+
+        if (icon) {
+            // Pulse animation for the icon
+            gsap.fromTo(icon,
+                { scale: 1.3, color: '#fff', rotate: 15 },
+                { scale: 1, color: 'currentColor', rotate: 0, duration: 0.3, ease: "elastic.out(1, 0.5)", overwrite: true }
+            );
+        }
+
+        // Burst of particles
+        const burstCount = Math.floor(Math.random() * 3) + 3; // Reduced: 3-5 particles
+
+        for (let i = 0; i < burstCount; i++) {
+            setTimeout(createParticle, i * 20);
+        }
+    });
+})();

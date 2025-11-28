@@ -226,3 +226,12 @@ h3,
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+
+/* Particle Effects */
+.particle {
+    position: fixed;
+    pointer-events: none;
+    border-radius: 50%;
+    z-index: 9999;
+    box-shadow: 0 0 6px rgba(251, 191, 36, 0.4);
+}
