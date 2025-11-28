@@ -130,6 +130,7 @@ form.addEventListener('submit', (e) => {
     const eventVal = document.getElementById('input-event').value.trim();
     const winVal = document.getElementById('input-win').value.trim();
     const nextVal = document.getElementById('input-next').value.trim();
+    const isSatisfied = document.getElementById('input-satisfied').checked;
 
     if (!eventVal || !winVal || !nextVal) {
         // Simple shake animation for error
@@ -146,7 +147,7 @@ form.addEventListener('submit', (e) => {
         event: eventVal,
         win: winVal,
         next: nextVal,
-        winLength: winVal.length // Store length for heatmap intensity
+        isSatisfied: isSatisfied // New: satisfaction flag
     };
 
     saveReflection(newEntry);
@@ -163,6 +164,8 @@ form.addEventListener('submit', (e) => {
                 form.reset();
                 // Reset heights
                 textareas.forEach(t => t.style.height = 'auto');
+                // Reset satisfaction toggle
+                document.getElementById('input-satisfied').checked = false;
                 switchView('history');
             }
         });
@@ -176,8 +179,9 @@ function renderHeatmap() {
     // 1. Prepare data map: date -> intensity score
     const activityMap = {};
     reflections.forEach(r => {
-        // Use Win length as a proxy for intensity, cap at a reasonable number
-        const score = Math.min(r.winLength ? Math.ceil(r.winLength / 20) : 1, 4);
+        // Base Rule: Any record = Level 3 (high brightness)
+        // Optional Star: isSatisfied = true -> Level 4 (maximum)
+        const score = r.isSatisfied ? 4 : 3;
         // If multiple entries per day, take the max score
         activityMap[r.isoDate] = Math.max(activityMap[r.isoDate] || 0, score);
     });
