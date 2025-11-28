@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3 Point | Daily Reflection</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- GSAP for Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts: Added Japanese Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+JP:wght@300;400;500&family=Noto+Serif+JP:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #0a0a0a;
+            --text-primary: #e5e5e5;
+            --text-secondary: #a3a3a3;
+            --accent-event: #737373;
+            /* Neutral */
+            --accent-win: #d4af37;
+            /* Gold */
+            --accent-next: #3b82f6;
+            /* Blue */
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-bg: rgba(20, 20, 20, 0.6);
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            /* Japanese Font Stack Preference */
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1,
+        h2,
+        h3,
+        .serif {
+            /* Japanese Serif Preference */
+            font-family: 'Playfair Display', 'Noto Serif JP', serif;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Ambient Background Noise */
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* Subtle Gradient Orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.4;
+        }
+
+        .orb-1 {
+            top: -10%;
+            left: -10%;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, #1a1a1a 0%, transparent 70%);
+        }
+
+        .orb-2 {
+            bottom: -10%;
+            right: -10%;
+            width: 40vw;
+            height: 40vw;
+            background: radial-gradient(circle, #1e1b10 0%, transparent 70%);
+        }
+
+        /* Custom Input Styling */
+        .input-group textarea {
+            background: transparent;
+            border: none;
+            border-left: 2px solid var(--glass-border);
+            color: var(--text-primary);
+            font-size: 1.125rem;
+            line-height: 1.75;
+            resize: none;
+            transition: all 0.3s ease;
+            padding-left: 1.5rem;
+        }
+
+        .input-group textarea:focus {
+            outline: none;
+            border-left-color: currentColor;
+            /* Inherits text color set in HTML */
+        }
+
+        .input-group label {
+            transition: color 0.3s ease;
+        }
+
+        /* Placeholder styling for Japanese text */
+        .input-group textarea::placeholder {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-weight: 300;
+            opacity: 0.4;
+        }
+
+        /* Glassmorphism Card */
+        .entry-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px);
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .entry-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            background-color: rgba(30, 30, 30, 0.8);
+        }
+
+        /* Collapsible Specific Styles */
+        .card-body {
+            height: 0;
+            overflow: hidden;
+        }
+
+        /* Heatmap Grid */
+        .heatmap-grid {
+            display: grid;
+            grid-template-rows: repeat(7, 1fr);
+            grid-auto-flow: column;
+            gap: 4px;
+        }
+
+        .heatmap-cell {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            background-color: rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.2);
+            z-index: 10;
+        }
+
+        .heatmap-cell.level-1 {
+            background-color: rgba(212, 175, 55, 0.2);
+        }
+
+        .heatmap-cell.level-2 {
+            background-color: rgba(212, 175, 55, 0.4);
+        }
+
+        .heatmap-cell.level-3 {
+            background-color: rgba(212, 175, 55, 0.7);
+        }
+
+        .heatmap-cell.level-4 {
+            background-color: rgba(212, 175, 55, 1.0);
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Navigation Active State */
+        .nav-btn.active {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Animations Utility */
+        .reveal-text {
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col relative selection:bg-white/20 selection:text-white">
+
+    <!-- Ambient Elements -->
+    <div class="noise-overlay"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <!-- Header -->
+    <header
+        class="fixed top-0 w-full z-40 px-6 py-6 flex justify-between items-center backdrop-blur-sm bg-black/20 border-b border-white/5">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 border border-white/20 rounded-full flex items-center justify-center">
+                <span class="serif italic font-bold text-lg">3</span>
+            </div>
+            <span class="tracking-widest text-xs mono uppercase text-white/60">Three Point</span>
+        </div>
+
+        <nav class="flex bg-white/5 rounded-full p-1 border border-white/10 backdrop-blur-md">
+            <button id="nav-new"
+                class="nav-btn active px-5 py-2 rounded-full text-xs font-medium transition-all duration-300 text-white/40 hover:text-white"
+                onclick="switchView('new')">
+                記録する
+            </button>
+            <button id="nav-history"
+                class="nav-btn px-5 py-2 rounded-full text-xs font-medium transition-all duration-300 text-white/40 hover:text-white"
+                onclick="switchView('history')">
+                履歴
+            </button>
+        </nav>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow pt-28 pb-10 px-4 md:px-0 w-full max-w-4xl mx-auto relative perspective-1000">
+
+        <!-- VIEW: NEW ENTRY -->
+        <section id="view-new" class="w-full relative z-10">
+            <div class="mb-12 text-center md:text-left md:pl-6">
+                <p class="mono text-xs text-white/40 mb-2 tracking-wider" id="current-date">TODAY</p>
+                <h1 class="text-4xl md:text-5xl font-light serif leading-tight">
+                    Daily <span class="italic text-white/30">Reflection</span>
+                </h1>
+                <p class="text-white/30 text-sm mt-2 font-light">今日一日を、3つの視点で振り返る</p>
+            </div>
+
+            <form id="reflection-form" class="space-y-12 md:pl-6">
+
+                <!-- Point 1: Event -->
+                <div class="input-group group relative">
+                    <label
+                        class="block mono text-xs uppercase tracking-widest mb-4 text-[var(--accent-event)] flex items-center gap-2 font-bold">
+                        <i data-lucide="circle" class="w-3 h-3"></i> 01. Event (事実)
+                    </label>
+                    <textarea id="input-event" rows="1"
+                        class="w-full bg-transparent text-xl md:text-2xl placeholder-white/10" style="color: #d1d5db;"
+                        placeholder="今日、客観的に何が起きましたか？"></textarea>
+                    <p
+                        class="text-xs text-white/20 mt-2 pl-6 opacity-0 group-focus-within:opacity-100 transition-opacity duration-500">
+                        感情を抜きにして、事実・データだけに目を向けましょう。</p>
+                </div>
+
+                <!-- Point 2: Win -->
+                <div class="input-group group relative">
+                    <label
+                        class="block mono text-xs uppercase tracking-widest mb-4 text-[var(--accent-win)] flex items-center gap-2 font-bold">
+                        <i data-lucide="sparkles" class="w-3 h-3"></i> 02. Win (成果・発見)
+                    </label>
+                    <textarea id="input-win" rows="1"
+                        class="w-full bg-transparent text-xl md:text-2xl placeholder-white/10" style="color: #fcd34d;"
+                        placeholder="うまくいったこと、学んだことは？"></textarea>
+                    <p
+                        class="text-xs text-white/20 mt-2 pl-6 opacity-0 group-focus-within:opacity-100 transition-opacity duration-500">
+                        些細なことでも構いません。小さな一歩も大切な「勝利」です。</p>
+                </div>
+
+                <!-- Point 3: Next -->
+                <div class="input-group group relative">
+                    <label
+                        class="block mono text-xs uppercase tracking-widest mb-4 text-[var(--accent-next)] flex items-center gap-2 font-bold">
+                        <i data-lucide="arrow-right" class="w-3 h-3"></i> 03. Next (次への一手)
+                    </label>
+                    <textarea id="input-next" rows="1"
+                        class="w-full bg-transparent text-xl md:text-2xl placeholder-white/10" style="color: #60a5fa;"
+                        placeholder="次に具体的などのようなアクションを起こしますか？"></textarea>
+                    <p
+                        class="text-xs text-white/20 mt-2 pl-6 opacity-0 group-focus-within:opacity-100 transition-opacity duration-500">
+                        建設的で、未来につながる具体的な行動を書きましょう。</p>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-8 flex justify-end">
+                    <button type="submit"
+                        class="group relative overflow-hidden bg-white text-black px-8 py-4 rounded-sm font-medium transition-all hover:bg-gray-200">
+                        <span class="relative z-10 flex items-center gap-2 font-medium">
+                            保存する <i data-lucide="arrow-right"
+                                class="w-4 h-4 transition-transform group-hover:translate-x-1"></i>
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- VIEW: HISTORY -->
+        <section id="view-history" class="hidden w-full relative z-10">
+            <div
+                class="mb-8 text-center md:text-left px-2 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-light serif leading-tight">
+                        Your <span class="italic text-white/30">Journey</span>
+                    </h1>
+                    <p class="text-white/30 text-sm mt-2 font-light">積み重ねた思考の軌跡</p>
+                </div>
+                <!-- Heatmap Container -->
+                <div id="heatmap-container"
+                    class="flex gap-2 items-end opacity-60 hover:opacity-100 transition-opacity">
+                    <div
+                        class="flex flex-col justify-between text-[8px] mono text-white/30 h-[78px] py-1 text-right pr-1">
+                        <span>Mon</span><span>Wed</span><span>Fri</span>
+                    </div>
+                    <div id="heatmap-grid" class="heatmap-grid">
+                        <!-- Heatmap cells generated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="history-list" class="flex flex-col gap-4 pb-20 px-2">
+                <!-- Collapsible Cards will be injected here JS -->
+            </div>
+
+            <div id="empty-state" class="hidden text-center py-20 opacity-50">
+                <p class="text-sm font-light">まだ記録がありません。今日から始めましょう。</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Success Modal Overlay -->
+    <div id="success-overlay"
+        class="fixed inset-0 z-50 pointer-events-none flex items-center justify-center opacity-0 bg-black/80 backdrop-blur-sm">
+        <div class="text-center transform scale-90" id="success-content">
+            <div
+                class="w-20 h-20 rounded-full border border-[var(--accent-win)] flex items-center justify-center mx-auto mb-6 text-[var(--accent-win)]">
+                <i data-lucide="check" class="w-10 h-10"></i>
+            </div>
+            <h2 class="serif text-3xl italic mb-2">Saved</h2>
+            <p class="text-xs text-white/50 uppercase tracking-widest font-medium">自信が積み重なりました</p>
+        </div>
+    </div>
+
+    <script>
+        // --- Setup & Utilities ---
+        lucide.createIcons();
+
+        const views = {
+            new: document.getElementById('view-new'),
+            history: document.getElementById('view-history')
+        };
+        const navBtns = {
+            new: document.getElementById('nav-new'),
+            history: document.getElementById('nav-history')
+        };
+        const form = document.getElementById('reflection-form');
+        const historyList = document.getElementById('history-list'); // Changed id from grid to list
+        const emptyState = document.getElementById('empty-state');
+        const heatmapGrid = document.getElementById('heatmap-grid');
+
+        // Auto-resize textareas
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(el => {
+            el.addEventListener('input', function () {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        });
+
+        // Set Date (Japanese Format)
+        const dateOptions = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' };
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('ja-JP', dateOptions).toUpperCase();
+
+        // --- Animations (GSAP) ---
+
+        function animateInViewNew() {
+            const tl = gsap.timeline();
+            tl.fromTo("#view-new h1", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, ease: "power3.out" })
+                .fromTo("#view-new p", { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, ease: "power3.out" }, "-=0.6")
+                .fromTo(".input-group", { y: 30, opacity: 0 }, { y: 0, opacity: 1, stagger: 0.15, duration: 0.8, ease: "power3.out" }, "-=0.6")
+                .fromTo("button[type='submit']", { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5 }, "-=0.4");
+        }
+
+        // Initial Load Animation
+        animateInViewNew();
+
+        // --- View Switching Logic ---
+        window.switchView = (viewName) => {
+            // Update Nav
+            Object.values(navBtns).forEach(btn => btn.classList.remove('active'));
+            navBtns[viewName].classList.add('active');
+
+            // Crossfade Views
+            const activeView = viewName === 'new' ? views.new : views.history;
+            const inactiveView = viewName === 'new' ? views.history : views.new;
+
+            gsap.to(inactiveView, {
+                opacity: 0,
+                y: -20,
+                duration: 0.4,
+                display: 'none',
+                onComplete: () => {
+                    if (viewName === 'history') {
+                        renderHistory();
+                        renderHeatmap();
+                    }
+
+                    gsap.set(activeView, { display: 'block', y: 20 });
+                    gsap.to(activeView, {
+                        opacity: 1,
+                        y: 0,
+                        duration: 0.6,
+                        ease: "power3.out",
+                        onComplete: () => {
+                            if (viewName === 'history') {
+                                lucide.createIcons();
+                                // Stagger animation for new list items
+                                gsap.fromTo(".entry-card",
+                                    { y: 20, opacity: 0 },
+                                    { y: 0, opacity: 1, stagger: 0.05, duration: 0.4, ease: "power2.out", clearProps: "all" }
+                                );
+                            }
+                        }
+                    });
+                }
+            });
+        };
+
+        // --- Data Management (LocalStorage) ---
+
+        function getReflections() {
+            return JSON.parse(localStorage.getItem('3point_reflections') || '[]');
+        }
+
+        function saveReflection(data) {
+            const reflections = getReflections();
+            reflections.unshift(data); // Add to top
+            localStorage.setItem('3point_reflections', JSON.stringify(reflections));
+        }
+
+        function deleteReflection(id, cardElement) {
+            // Animate collapse before deletion
+            gsap.to(cardElement, {
+                height: 0,
+                opacity: 0,
+                marginBottom: 0,
+                duration: 0.4,
+                ease: "power3.in",
+                onComplete: () => {
+                    const reflections = getReflections().filter(r => r.id !== id);
+                    localStorage.setItem('3point_reflections', JSON.stringify(reflections));
+                    renderHistory();
+                    renderHeatmap();
+                }
+            });
+        }
+
+        // --- Form Handling ---
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const eventVal = document.getElementById('input-event').value.trim();
+            const winVal = document.getElementById('input-win').value.trim();
+            const nextVal = document.getElementById('input-next').value.trim();
+
+            if (!eventVal || !winVal || !nextVal) {
+                // Simple shake animation for error
+                gsap.to(form, { x: [-5, 5, -5, 5, 0], duration: 0.4 });
+                return;
+            }
+
+            const now = new Date();
+            const newEntry = {
+                id: Date.now(),
+                // Store ISO string for easier date manipulation in heatmap
+                isoDate: now.toISOString().split('T')[0],
+                date: now.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' }),
+                event: eventVal,
+                win: winVal,
+                next: nextVal,
+                winLength: winVal.length // Store length for heatmap intensity
+            };
+
+            saveReflection(newEntry);
+
+            // Success Animation
+            const overlay = document.getElementById('success-overlay');
+            const content = document.getElementById('success-content');
+
+            const tl = gsap.timeline();
+            tl.to(overlay, { opacity: 1, duration: 0.3 })
+                .fromTo(content, { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(1.7)" })
+                .to(overlay, {
+                    opacity: 0, delay: 1.2, duration: 0.5, onComplete: () => {
+                        form.reset();
+                        // Reset heights
+                        textareas.forEach(t => t.style.height = 'auto');
+                        switchView('history');
+                    }
+                });
+        });
+
+        // --- Render Heatmap ---
+        function renderHeatmap() {
+            heatmapGrid.innerHTML = '';
+            const reflections = getReflections();
+
+            // 1. Prepare data map: date -> intensity score
+            const activityMap = {};
+            reflections.forEach(r => {
+                // Use Win length as a proxy for intensity, cap at a reasonable number
+                const score = Math.min(r.winLength ? Math.ceil(r.winLength / 20) : 1, 4);
+                // If multiple entries per day, take the max score
+                activityMap[r.isoDate] = Math.max(activityMap[r.isoDate] || 0, score);
+            });
+
+            // 2. Generate grid for past X weeks (e.g., 16 weeks * 7 days)
+            const today = new Date();
+            // Adjust to ensure the grid ends on today or near today, aligned to weeks
+            const dayOfWeek = today.getDay(); // 0 (Sun) - 6 (Sat)
+            // Calculate start date: go back 15 weeks, then adjust to previous Sunday
+            const startDate = new Date(today);
+            startDate.setDate(today.getDate() - (15 * 7) - dayOfWeek);
+
+            const totalDays = 16 * 7;
+
+            for (let i = 0; i < totalDays; i++) {
+                const CurrentDateSpan = new Date(startDate);
+                CurrentDateSpan.setDate(startDate.getDate() + i);
+                const isoString = CurrentDateSpan.toISOString().split('T')[0];
+
+                const intensity = activityMap[isoString] || 0;
+                const cell = document.createElement('div');
+                cell.className = `heatmap-cell level-${intensity}`;
+                // Add simple tooltip via title attribute
+                cell.title = `${CurrentDateSpan.toLocaleDateString('ja-JP')}: ${intensity > 0 ? 'Recorded' : 'No entry'}`;
+
+                heatmapGrid.appendChild(cell);
+            }
+        }
+
+
+        // --- Render History (Collapsible) ---
+
+        function renderHistory() {
+            const reflections = getReflections();
+            historyList.innerHTML = '';
+
+            if (reflections.length === 0) {
+                emptyState.style.display = 'block';
+                heatmapGrid.parentElement.style.display = 'none'; // Hide heatmap if empty
+                return;
+            } else {
+                emptyState.style.display = 'none';
+                heatmapGrid.parentElement.style.display = 'flex';
+            }
+
+            reflections.forEach(item => {
+                const card = document.createElement('div');
+                // Removed 'group' class to avoid conflict with hover styles on expanded state
+                card.className = 'entry-card rounded-sm overflow-hidden mb-4 relative';
+
+                const eventColor = 'text-gray-400';
+                const winColor = 'text-amber-400';
+                const nextColor = 'text-blue-400';
+
+                // Truncate Win summary for the header
+                const winSummary = item.win.length > 40 ? item.win.substring(0, 40) + '...' : item.win;
+
+                card.innerHTML = `
+                    <!-- Collapsed Header (Always Visible) -->
+                    <div class="card-header p-5 flex justify-between items-center cursor-pointer bg-white/5 hover:bg-white/10 transition-colors">
+                        <div class="flex-grow pr-4">
+                             <div class="flex items-center gap-3 mb-1">
+                                <span class="mono text-xs text-white/40 tracking-wider">${item.date}</span>
+                             </div>
+                             <div class="flex items-center gap-2">
+                                <i data-lucide="sparkles" class="w-3 h-3 ${winColor} flex-shrink-0"></i>
+                                <p class="text-sm font-medium ${winColor} line-clamp-1">${winSummary}</p>
+                             </div>
+                        </div>
+                        <div class="chevron-icon transition-transform duration-300 text-white/30">
+                             <i data-lucide="chevron-down" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+
+                    <!-- Expanded Body (Hidden by default) -->
+                    <div class="card-body bg-black/20">
+                        <div class="p-6 md:p-8 flex flex-col gap-6 border-t border-white/5">
+                            
+                            <div class="space-y-1">
+                                <span class="text-[10px] uppercase tracking-widest text-white/30 font-bold flex items-center gap-2">
+                                    <i data-lucide="circle" class="w-3 h-3 ${eventColor}"></i> Event (事実)
+                                </span>
+                                <p class="text-base font-light leading-relaxed ${eventColor} pl-5">${item.event}</p>
+                            </div>
+
+                            <div class="space-y-1">
+                                <span class="text-[10px] uppercase tracking-widest text-white/30 font-bold flex items-center gap-2">
+                                    <i data-lucide="sparkles" class="w-3 h-3 ${winColor}"></i> Win (発見)
+                                </span>
+                                <p class="text-base font-light leading-relaxed ${winColor} pl-5">${item.win}</p>
+                            </div>
+
+                            <div class="space-y-1">
+                                <span class="text-[10px] uppercase tracking-widest text-white/30 font-bold flex items-center gap-2">
+                                    <i data-lucide="arrow-right" class="w-3 h-3 ${nextColor}"></i> Next (次)
+                                </span>
+                                <p class="text-base font-light leading-relaxed ${nextColor} pl-5">${item.next}</p>
+                            </div>
+
+                             <div class="flex justify-end pt-4 border-t border-white/5 opacity-50 hover:opacity-100 transition-opacity">
+                                <button class="delete-btn text-xs mono text-red-400 flex items-center gap-1 hover:underline">
+                                    <i data-lucide="trash-2" class="w-3 h-3"></i> 削除する
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                historyList.appendChild(card);
+
+                // --- Add Interactions ---
+                const header = card.querySelector('.card-header');
+                const body = card.querySelector('.card-body');
+                const chevron = card.querySelector('.chevron-icon');
+                const deleteBtn = card.querySelector('.delete-btn');
+
+                let isExpanded = false;
+
+                header.addEventListener('click', () => {
+                    if (!isExpanded) {
+                        // Expand
+                        gsap.set(body, { height: 'auto' });
+                        gsap.from(body, { height: 0, duration: 0.4, ease: "power3.inOut" });
+                        gsap.to(chevron, { rotation: 180, duration: 0.3 });
+                        card.classList.add('bg-white/5'); // Keep highlight when open
+                    } else {
+                        // Collapse
+                        gsap.to(body, { height: 0, duration: 0.3, ease: "power3.inOut" });
+                        gsap.to(chevron, { rotation: 0, duration: 0.3 });
+                        card.classList.remove('bg-white/5');
+                    }
+                    isExpanded = !isExpanded;
+                });
+
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent card toggle when clicking delete
+                    if (confirm('本当に削除しますか？')) {
+                        deleteReflection(item.id, card);
+                    }
+                });
+
+            });
+
+        }
+
+    </script>
+</body>
+
+</html>
