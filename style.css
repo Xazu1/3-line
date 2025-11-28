@@ -1,0 +1,197 @@
+:root {
+    --bg-dark: #0a0a0a;
+    --text-primary: #e5e5e5;
+    --text-secondary: #a3a3a3;
+    --accent-event: #737373;
+    /* Neutral */
+    --accent-win: #d4af37;
+    /* Gold */
+    --accent-next: #3b82f6;
+    /* Blue */
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-bg: rgba(20, 20, 20, 0.6);
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    /* Japanese Font Stack Preference */
+    font-family: 'Inter', 'Noto Sans JP', sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+.serif {
+    /* Japanese Serif Preference */
+    font-family: 'Playfair Display', 'Noto Serif JP', serif;
+}
+
+.mono {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Ambient Background Noise */
+.noise-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Subtle Gradient Orbs */
+.orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: -1;
+    opacity: 0.4;
+}
+
+.orb-1 {
+    top: -10%;
+    left: -10%;
+    width: 50vw;
+    height: 50vw;
+    background: radial-gradient(circle, #1a1a1a 0%, transparent 70%);
+}
+
+.orb-2 {
+    bottom: -10%;
+    right: -10%;
+    width: 40vw;
+    height: 40vw;
+    background: radial-gradient(circle, #1e1b10 0%, transparent 70%);
+}
+
+/* Custom Input Styling */
+.input-group textarea {
+    background: transparent;
+    border: none;
+    border-left: 2px solid var(--glass-border);
+    color: var(--text-primary);
+    font-size: 1.125rem;
+    line-height: 1.75;
+    resize: none;
+    transition: all 0.3s ease;
+    padding-left: 1.5rem;
+}
+
+.input-group textarea:focus {
+    outline: none;
+    border-left-color: currentColor;
+    /* Inherits text color set in HTML */
+}
+
+.input-group label {
+    transition: color 0.3s ease;
+}
+
+/* Placeholder styling for Japanese text */
+.input-group textarea::placeholder {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 300;
+    opacity: 0.4;
+}
+
+/* Glassmorphism Card */
+.entry-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.entry-card:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(30, 30, 30, 0.8);
+}
+
+/* Collapsible Specific Styles */
+.card-body {
+    height: 0;
+    overflow: hidden;
+}
+
+/* Heatmap Grid */
+.heatmap-grid {
+    display: grid;
+    grid-template-rows: repeat(7, 1fr);
+    grid-auto-flow: column;
+    gap: 4px;
+}
+
+.heatmap-cell {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background-color: rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.heatmap-cell:hover {
+    transform: scale(1.2);
+    z-index: 10;
+}
+
+.heatmap-cell.level-1 {
+    background-color: rgba(212, 175, 55, 0.2);
+}
+
+.heatmap-cell.level-2 {
+    background-color: rgba(212, 175, 55, 0.4);
+}
+
+.heatmap-cell.level-3 {
+    background-color: rgba(212, 175, 55, 0.7);
+}
+
+.heatmap-cell.level-4 {
+    background-color: rgba(212, 175, 55, 1.0);
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Navigation Active State */
+.nav-btn.active {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Animations Utility */
+.reveal-text {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
