@@ -167,6 +167,18 @@ form.addEventListener('submit', (e) => {
                 // Reset satisfaction toggle
                 document.getElementById('input-satisfied').checked = false;
                 switchView('history');
+
+                // Wait for view switch, then scroll to and animate heatmap
+                setTimeout(() => {
+                    const heatmapContainer = document.getElementById('heatmap-container');
+                    if (heatmapContainer) {
+                        // Smooth scroll to heatmap
+                        heatmapContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                        // Trigger animation on today's cell
+                        setTimeout(animateTodayCell, 500);
+                    }
+                }, 600);
             }
         });
 });
@@ -207,8 +219,169 @@ function renderHeatmap() {
         // Add simple tooltip via title attribute
         cell.title = `${CurrentDateSpan.toLocaleDateString('ja-JP')}: ${intensity > 0 ? 'Recorded' : 'No entry'}`;
 
+        // Mark today's cell for animation
+        const todayISO = new Date().toISOString().split('T')[0];
+        if (isoString === todayISO) {
+            cell.classList.add('today-cell');
+            cell.dataset.isToday = 'true';
+        }
+
         heatmapGrid.appendChild(cell);
     }
+}
+
+// --- Animate Today's Cell (Completion Ritual) - 华丽版 ---
+function animateTodayCell() {
+    const todayCell = document.querySelector('.heatmap-cell.today-cell');
+    if (!todayCell) return;
+
+    // Add third ripple layer dynamically - 动态添加第三层波纹
+    const rippleLayer3 = document.createElement('div');
+    rippleLayer3.className = 'ripple-layer-3';
+    todayCell.appendChild(rippleLayer3);
+
+    // 更华丽的弹性动画: scale(0) -> scale(2.5) -> scale(1.2) -> scale(1)
+    const tl = gsap.timeline();
+
+    tl.fromTo(todayCell,
+        { scale: 0, opacity: 0 },
+        {
+            scale: 2.5,  // 更大的初始弹出
+            opacity: 1,
+            duration: 0.5,
+            ease: "back.out(3)",  // 更强的弹性
+            onStart: () => {
+                // 触发波纹效果
+                todayCell.classList.add('ripple-active');
+
+                // 爆发粒子效果
+                createHeatmapParticleBurst(todayCell);
+
+                // 周围格子的连锁脉冲
+                animateNearbyCells(todayCell);
+            }
+        }
+    )
+        .to(todayCell, {
+            scale: 1.2,  // 中间过渡
+            duration: 0.4,
+            ease: "power2.out"
+        })
+        .to(todayCell, {
+            scale: 1,  // 最终稳定
+            duration: 0.6,
+            ease: "elastic.out(1, 0.6)",
+            onComplete: () => {
+                // 清理第三层波纹
+                setTimeout(() => {
+                    if (rippleLayer3.parentNode) {
+                        rippleLayer3.remove();
+                    }
+                }, 1600);
+            }
+        });
+}
+
+// 创建热力图粒子爆发效果
+function createHeatmapParticleBurst(cell) {
+    const rect = cell.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    // 爆发 12-18 个粒子
+    const particleCount = Math.floor(Math.random() * 7) + 12;
+
+    for (let i = 0; i < particleCount; i++) {
+        setTimeout(() => {
+            createHeatmapParticle(centerX, centerY);
+        }, i * 30);
+    }
+}
+
+// 创建单个热力图粒子
+function createHeatmapParticle(startX, startY) {
+    const particle = document.createElement('div');
+    particle.className = 'heatmap-particle';
+
+    // 随机大小 2-6px
+    const size = Math.random() * 4 + 2;
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size}px`;
+
+    // 随机偏移起始位置
+    const offsetX = (Math.random() - 0.5) * 15;
+    const offsetY = (Math.random() - 0.5) * 15;
+
+    particle.style.left = `${startX + offsetX}px`;
+    particle.style.top = `${startY + offsetY}px`;
+
+    document.body.appendChild(particle);
+
+    // 随机方向和距离
+    const angle = Math.random() * Math.PI * 2;
+    const distance = Math.random() * 80 + 40;  // 40-120px
+    const driftX = Math.cos(angle) * distance;
+    const driftY = Math.sin(angle) * distance;
+
+    // GSAP动画
+    gsap.to(particle, {
+        x: driftX,
+        y: driftY,
+        opacity: 0,
+        scale: 0,
+        duration: Math.random() * 1.5 + 1,  // 1-2.5s
+        ease: "power2.out",
+        onComplete: () => {
+            particle.remove();
+        }
+    });
+}
+
+// 周围格子的连锁脉冲效果
+function animateNearbyCells(todayCell) {
+    const allCells = Array.from(document.querySelectorAll('.heatmap-cell'));
+    const todayIndex = allCells.indexOf(todayCell);
+
+    if (todayIndex === -1) return;
+
+    // 找到周围的格子（上下左右，对角线）
+    const gridCols = Math.ceil(allCells.length / 7);
+    const row = todayIndex % 7;
+    const col = Math.floor(todayIndex / 7);
+
+    const neighbors = [];
+
+    // 检查周围8个方向
+    for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+            if (dr === 0 && dc === 0) continue;  // 跳过自己
+
+            const newRow = row + dr;
+            const newCol = col + dc;
+
+            if (newRow >= 0 && newRow < 7 && newCol >= 0 && newCol < gridCols) {
+                const neighborIndex = newCol * 7 + newRow;
+                if (neighborIndex >= 0 && neighborIndex < allCells.length) {
+                    neighbors.push({
+                        cell: allCells[neighborIndex],
+                        distance: Math.abs(dr) + Math.abs(dc)
+                    });
+                }
+            }
+        }
+    }
+
+    // 根据距离延迟触发动画
+    neighbors.forEach(({ cell, distance }) => {
+        setTimeout(() => {
+            cell.classList.add('nearby-pulse');
+
+            // 动画结束后移除class
+            setTimeout(() => {
+                cell.classList.remove('nearby-pulse');
+            }, 800);
+        }, distance * 100);  // 距离越远延迟越大
+    });
 }
 
 
@@ -472,9 +645,25 @@ function renderHistory() {
     let icon = emitter.querySelector('svg');
 
     function createParticle() {
-        if (!icon) {
-            icon = emitter.querySelector('svg');
-            if (!icon) return;
+        // Always get the latest icon reference to avoid stale elements
+        // 每次都重新获取最新的icon元素，防止引用失效（死节点）导致坐标为0
+        icon = emitter.querySelector('svg');
+
+        if (!icon) return;
+
+        // 检查输入框的父视图是否可见
+        const parentView = document.getElementById('view-new');
+        if (!parentView || parentView.style.display === 'none' || window.getComputedStyle(parentView).display === 'none') {
+            return;
+        }
+
+        // Get Emitter Position
+        const rect = icon.getBoundingClientRect();
+
+        // 额外检查：如果坐标异常（例如都是0），则不创建粒子
+        // 这通常意味着元素不可见或不在DOM中
+        if (rect.width === 0 && rect.height === 0) {
+            return;
         }
 
         const particle = document.createElement('div');
@@ -485,9 +674,6 @@ function renderHistory() {
         particle.style.width = `${size}px`;
         particle.style.height = `${size}px`;
         particle.style.background = '#fbbf24'; // Tailwind amber-400
-
-        // Get Emitter Position
-        const rect = icon.getBoundingClientRect();
 
         // Random start position near the icon center
         const startX = rect.left + rect.width / 2 + (Math.random() * 20 - 10);
